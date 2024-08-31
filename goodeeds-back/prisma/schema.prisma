@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int          @id @default(autoincrement())
+  username         String       @unique
+  hash             String
+  salt             String
+  deeds            Deed[]
+  sentRequests     Friendship[] @relation("sentRequests")
+  receivedRequests Friendship[] @relation("receivedRequests")
+
+  @@map("users")
+}
+
+model Friendship {
+  fromUser   User    @relation("sentRequests", fields: [fromUserId], references: [id])
+  fromUserId Int
+  toUser     User    @relation("receivedRequests", fields: [toUserId], references: [id])
+  toUserId   Int
+  isPending  Boolean @default(true)
+
+  @@id([fromUserId, toUserId])
+  @@map("friendship")
+}
+
+model Deed {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  type      DeedType
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("deeds")
+}
+
+enum DeedType {
+  CHARITY
+  VOLUNTEERING
+  ENVIRONMENTAL
+  EDUCATION
+  COMMUNITY
+  HEALTHCARE
+  ANIMAL_WELFARE
+  ADVOCACY
+  RANDOM_ACTS
+  OTHER
+}
